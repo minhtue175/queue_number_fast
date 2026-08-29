@@ -238,6 +238,28 @@ class QueueHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                     self.send_json(404, {"success": False, "error": "Không tìm thấy vé"})
                     return
 
+                if ticket['status'] == 'COMPLETED':
+                    conn.close()
+                    self.send_json(400, {"success": False, "error": "Vé này đã hoàn tất dịch vụ rồi"})
+                    return
+
+                # Strict FIFO check: Cannot complete if any previous ticket for today is still ISSUED
+                date_key = ticket['date_key']
+                ticket_number = ticket['ticket_number']
+                cursor.execute(
+                    "SELECT ticket_number FROM tickets WHERE date_key = ? AND status = 'ISSUED' AND ticket_number < ? ORDER BY ticket_number ASC LIMIT 1",
+                    (date_key, ticket_number)
+                )
+                prev_ticket = cursor.fetchone()
+                if prev_ticket:
+                    conn.close()
+                    prev_num = prev_ticket['ticket_number']
+                    self.send_json(400, {
+                        "success": False,
+                        "error": f"Chưa thể hoàn tất! Số thứ tự #{prev_num:03d} trước bạn chưa hoàn thành dịch vụ."
+                    })
+                    return
+
                 completed_at = datetime.now(VIETNAM_TZ).isoformat()
                 cursor.execute(
                     "UPDATE tickets SET status = 'COMPLETED', completed_at = ? WHERE ticket_id = ?",

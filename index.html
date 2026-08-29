@@ -665,6 +665,7 @@
         // CONFIG & STATE
         const LOCAL_STORAGE_KEY = 'qr_queue_ticket_v1';
         let currentTicket = null;
+        let currentWaitingAhead = 0;
         let canvasAnimId = null;
 
         // UI ELEMENTS
@@ -722,12 +723,19 @@
 
                     if (currentTicket && currentTicket.status === 'ISSUED') {
                         const ahead = data.waiting_ahead !== undefined ? data.waiting_ahead : 0;
+                        currentWaitingAhead = ahead;
                         if (ahead === 0) {
                             waitingAheadCard.classList.add('turn-now');
                             waitingAheadText.innerHTML = '🎉 ĐẾN LƯỢT BẠN PHỤC VỤ!';
+                            btnCompleteTicket.disabled = false;
+                            btnCompleteTicket.style.opacity = '1';
+                            btnCompleteTicket.style.cursor = 'pointer';
                         } else {
                             waitingAheadCard.classList.remove('turn-now');
                             waitingAheadText.textContent = `${ahead} số đang chờ`;
+                            btnCompleteTicket.disabled = true;
+                            btnCompleteTicket.style.opacity = '0.6';
+                            btnCompleteTicket.style.cursor = 'not-allowed';
                         }
                     }
                 }
@@ -902,14 +910,12 @@
                     saveTicketState(currentTicket);
                     renderState();
                 } else {
-                    alert('Lỗi: ' + (data.error || 'Thao tác thất bại') + '\n\nVé không còn tồn tại trên máy chủ. Giao diện sẽ tự làm mới để bạn bốc vé mới.');
-                    clearTicketState();
-                    renderState();
+                    alert('⚠️ Lỗi: ' + (data.error || 'Thao tác thất bại'));
+                    fetchQueueStatus();
                 }
             } catch (e) {
-                currentTicket.status = 'COMPLETED';
-                saveTicketState(currentTicket);
-                renderState();
+                console.error(e);
+                alert('⚠️ Lỗi kết nối máy chủ. Vui lòng thử lại!');
             }
         }
 
@@ -917,6 +923,10 @@
         btnIssueTicket.addEventListener('click', issueTicket);
 
         btnCompleteTicket.addEventListener('click', () => {
+            if (currentWaitingAhead > 0) {
+                alert(`⚠️ Chưa đến lượt bạn!\nĐang có ${currentWaitingAhead} số thứ tự trước bạn chưa hoàn thành dịch vụ.`);
+                return;
+            }
             confirmModal.classList.add('active');
         });
 

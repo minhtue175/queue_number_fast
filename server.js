@@ -117,13 +117,31 @@ app.post('/api/queue/complete', (req, res) => {
         return res.status(400).json({ success: false, error: 'Thiếu ticket_id' });
     }
 
-    const completedAt = new Date().toISOString();
-    const result = db.prepare("UPDATE tickets SET status = 'COMPLETED', completed_at = ? WHERE ticket_id = ?")
-        .run(completedAt, ticket_id);
-
-    if (result.changes === 0) {
+    const ticket = db.prepare('SELECT * FROM tickets WHERE ticket_id = ?').get(ticket_id);
+    if (!ticket) {
         return res.status(404).json({ success: false, error: 'Không tìm thấy vé' });
     }
+
+    if (ticket.status === 'COMPLETED') {
+        return res.status(400).json({ success: false, error: 'Vé này đã hoàn tất dịch vụ rồi' });
+    }
+
+    // Strict FIFO check: Cannot complete if any previous ticket for today is still ISSUED
+    const prevTicket = db.prepare(
+        "SELECT ticket_number FROM tickets WHERE date_key = ? AND status = 'ISSUED' AND ticket_number < ? ORDER BY ticket_number ASC LIMIT 1"
+    ).get(ticket.date_key, ticket.ticket_number);
+
+    if (prevTicket) {
+        const prevNum = String(prevTicket.ticket_number).padStart(3, '0');
+        return res.status(400).json({
+            success: false,
+            error: `Chưa thể hoàn tất! Số thứ tự #${prevNum} trước bạn chưa hoàn thành dịch vụ.`
+        });
+    }
+
+    const completedAt = new Date().toISOString();
+    db.prepare("UPDATE tickets SET status = 'COMPLETED', completed_at = ? WHERE ticket_id = ?")
+        .run(completedAt, ticket_id);
 
     res.json({ success: true, ticket_id, status: 'COMPLETED', completed_at: completedAt });
 });
