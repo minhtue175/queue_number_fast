@@ -81,6 +81,7 @@ class QueueHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         if parsed_url.path == '/api/queue/status':
             query_params = parse_qs(parsed_url.query)
             ticket_num_param = query_params.get('ticket_number', [None])[0]
+            ticket_id_param = query_params.get('ticket_id', [None])[0]
             
             date_key = get_current_date_key()
             conn = get_db()
@@ -93,7 +94,14 @@ class QueueHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             total_waiting = cursor.fetchone()['cnt']
             
             waiting_ahead = 0
-            if ticket_num_param is not None:
+            my_ticket_status = None
+            if ticket_id_param:
+                cursor.execute("SELECT status FROM tickets WHERE ticket_id = ?", (ticket_id_param,))
+                t_row = cursor.fetchone()
+                if t_row:
+                    my_ticket_status = t_row['status']
+
+            if ticket_num_param is not None and ticket_num_param != '':
                 try:
                     t_num = int(ticket_num_param)
                     cursor.execute(
@@ -101,6 +109,11 @@ class QueueHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                         (date_key, t_num)
                     )
                     waiting_ahead = cursor.fetchone()['cnt']
+                    if not my_ticket_status:
+                        cursor.execute("SELECT status FROM tickets WHERE date_key = ? AND ticket_number = ?", (date_key, t_num))
+                        t_row = cursor.fetchone()
+                        if t_row:
+                            my_ticket_status = t_row['status']
                 except ValueError:
                     waiting_ahead = 0
 
@@ -112,7 +125,54 @@ class QueueHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 "server_time": now.isoformat(),
                 "latest_issued_number": current_num,
                 "total_waiting": total_waiting,
-                "waiting_ahead": waiting_ahead
+                "waiting_ahead": waiting_ahead,
+                "my_ticket_status": my_ticket_status
+            })
+            return
+
+        if parsed_url.path == '/api/admin/tickets':
+            query_params = parse_qs(parsed_url.query)
+            token = query_params.get('token', [''])[0] or self.headers.get('Authorization', '').replace('Bearer ', '')
+            if token != 'admin-session-token-3003':
+                self.send_json(401, {"success": False, "error": "Chưa đăng nhập hoặc phiên làm việc hết hạn"})
+                return
+            
+            date_key = get_current_date_key()
+            conn = get_db()
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM tickets WHERE date_key = ? ORDER BY ticket_number ASC", (date_key,))
+            rows = cursor.fetchall()
+            tickets = []
+            waiting_cnt = 0
+            completed_cnt = 0
+            for r in rows:
+                t_dict = {
+                    "ticket_id": r['ticket_id'],
+                    "date_key": r['date_key'],
+                    "ticket_number": r['ticket_number'],
+                    "status": r['status'],
+                    "created_at": r['created_at'],
+                    "completed_at": r['completed_at']
+                }
+                tickets.append(t_dict)
+                if r['status'] == 'ISSUED':
+                    waiting_cnt += 1
+                elif r['status'] == 'COMPLETED':
+                    completed_cnt += 1
+            
+            cursor.execute("SELECT current_number FROM daily_counters WHERE date_key = ?", (date_key,))
+            c_row = cursor.fetchone()
+            latest_number = c_row['current_number'] if c_row else 0
+            conn.close()
+
+            self.send_json(200, {
+                "success": True,
+                "date_key": date_key,
+                "latest_number": latest_number,
+                "total_tickets": len(tickets),
+                "waiting_count": waiting_cnt,
+                "completed_count": completed_cnt,
+                "tickets": tickets
             })
             return
 
@@ -274,6 +334,71 @@ class QueueHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                     "status": "COMPLETED",
                     "completed_at": completed_at
                 })
+            except Exception as e:
+                conn.rollback()
+                conn.close()
+                self.send_json(500, {"success": False, "error": str(e)})
+            return
+
+        elif self.path == '/api/admin/login':
+            username = body.get('username', '').strip()
+            password = body.get('password', '').strip()
+            if username == 'thuchanh3003' and password == 'thuchanh30032005':
+                self.send_json(200, {
+                    "success": True,
+                    "token": "admin-session-token-3003",
+                    "message": "Đăng nhập Admin thành công!"
+                })
+            else:
+                self.send_json(401, {
+                    "success": False,
+                    "error": "Tài khoản hoặc mật khẩu Admin không chính xác!"
+                })
+            return
+
+        elif self.path == '/api/admin/complete':
+            token = body.get('token') or self.headers.get('Authorization', '').replace('Bearer ', '')
+            if token != 'admin-session-token-3003':
+                self.send_json(401, {"success": False, "error": "Chưa đăng nhập Admin hoặc phiên đã hết hạn"})
+                return
+
+            ticket_id = body.get('ticket_id')
+            if not ticket_id:
+                self.send_json(400, {"success": False, "error": "Thiếu ticket_id"})
+                return
+
+            conn = get_db()
+            try:
+                cursor = conn.cursor()
+                completed_at = datetime.now(VIETNAM_TZ).isoformat()
+                cursor.execute(
+                    "UPDATE tickets SET status = 'COMPLETED', completed_at = ? WHERE ticket_id = ?",
+                    (completed_at, ticket_id)
+                )
+                conn.commit()
+                conn.close()
+                self.send_json(200, {"success": True, "message": "Đã hoàn tất vé từ quyền Admin"})
+            except Exception as e:
+                conn.rollback()
+                conn.close()
+                self.send_json(500, {"success": False, "error": str(e)})
+            return
+
+        elif self.path == '/api/admin/reset':
+            token = body.get('token') or self.headers.get('Authorization', '').replace('Bearer ', '')
+            if token != 'admin-session-token-3003':
+                self.send_json(401, {"success": False, "error": "Chưa đăng nhập Admin hoặc phiên đã hết hạn"})
+                return
+
+            date_key = get_current_date_key()
+            conn = get_db()
+            try:
+                cursor = conn.cursor()
+                cursor.execute("DELETE FROM tickets WHERE date_key = ?", (date_key,))
+                cursor.execute("UPDATE daily_counters SET current_number = 0, updated_at = CURRENT_TIMESTAMP WHERE date_key = ?", (date_key,))
+                conn.commit()
+                conn.close()
+                self.send_json(200, {"success": True, "message": "Đã reset toàn bộ số thứ tự hôm nay!"})
             except Exception as e:
                 conn.rollback()
                 conn.close()

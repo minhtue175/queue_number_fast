@@ -150,14 +150,26 @@ app.post('/api/queue/complete', (req, res) => {
 app.get('/api/queue/status', (req, res) => {
     const dateKey = getVietnamDateKey();
     const ticketNumber = req.query.ticket_number ? parseInt(req.query.ticket_number, 10) : null;
+    const ticketId = req.query.ticket_id || null;
     const row = db.prepare('SELECT current_number FROM daily_counters WHERE date_key = ?').get(dateKey);
     const totalRow = db.prepare("SELECT COUNT(*) as cnt FROM tickets WHERE date_key = ? AND status = 'ISSUED'").get(dateKey);
 
     let waitingAhead = 0;
+    let myTicketStatus = null;
+
+    if (ticketId) {
+        const tRow = db.prepare('SELECT status FROM tickets WHERE ticket_id = ?').get(ticketId);
+        if (tRow) myTicketStatus = tRow.status;
+    }
+
     if (ticketNumber !== null && !isNaN(ticketNumber)) {
         const aheadRow = db.prepare("SELECT COUNT(*) as cnt FROM tickets WHERE date_key = ? AND status = 'ISSUED' AND ticket_number < ?")
             .get(dateKey, ticketNumber);
         waitingAhead = aheadRow ? aheadRow.cnt : 0;
+        if (!myTicketStatus) {
+            const tRow = db.prepare('SELECT status FROM tickets WHERE date_key = ? AND ticket_number = ?').get(dateKey, ticketNumber);
+            if (tRow) myTicketStatus = tRow.status;
+        }
     }
 
     res.json({
@@ -166,8 +178,72 @@ app.get('/api/queue/status', (req, res) => {
         server_time: new Date().toISOString(),
         latest_issued_number: row ? row.current_number : 0,
         total_waiting: totalRow ? totalRow.cnt : 0,
-        waiting_ahead: waitingAhead
+        waiting_ahead: waitingAhead,
+        my_ticket_status: myTicketStatus
     });
+});
+
+// Admin Login API
+app.post('/api/admin/login', (req, res) => {
+    const { username, password } = req.body;
+    if (username === 'thuchanh3003' && password === 'thuchanh30032005') {
+        return res.json({ success: true, token: 'admin-session-token-3003', message: 'Đăng nhập Admin thành công!' });
+    }
+    return res.status(401).json({ success: false, error: 'Tài khoản hoặc mật khẩu Admin không chính xác!' });
+});
+
+// Admin Tickets List API
+app.get('/api/admin/tickets', (req, res) => {
+    const token = req.query.token || (req.headers.authorization && req.headers.authorization.replace('Bearer ', ''));
+    if (token !== 'admin-session-token-3003') {
+        return res.status(401).json({ success: false, error: 'Chưa đăng nhập hoặc phiên làm việc hết hạn' });
+    }
+    const dateKey = getVietnamDateKey();
+    const rows = db.prepare('SELECT * FROM tickets WHERE date_key = ? ORDER BY ticket_number ASC').all(dateKey);
+    const cRow = db.prepare('SELECT current_number FROM daily_counters WHERE date_key = ?').get(dateKey);
+    
+    let waitingCnt = 0;
+    let completedCnt = 0;
+    rows.forEach(r => {
+        if (r.status === 'ISSUED') waitingCnt++;
+        else if (r.status === 'COMPLETED') completedCnt++;
+    });
+
+    res.json({
+        success: true,
+        date_key: dateKey,
+        latest_number: cRow ? cRow.current_number : 0,
+        total_tickets: rows.length,
+        waiting_count: waitingCnt,
+        completed_count: completedCnt,
+        tickets: rows
+    });
+});
+
+// Admin Complete Ticket API
+app.post('/api/admin/complete', (req, res) => {
+    const token = req.body.token || (req.headers.authorization && req.headers.authorization.replace('Bearer ', ''));
+    if (token !== 'admin-session-token-3003') {
+        return res.status(401).json({ success: false, error: 'Chưa đăng nhập Admin hoặc phiên đã hết hạn' });
+    }
+    const { ticket_id } = req.body;
+    if (!ticket_id) return res.status(400).json({ success: false, error: 'Thiếu ticket_id' });
+
+    const completedAt = new Date().toISOString();
+    db.prepare("UPDATE tickets SET status = 'COMPLETED', completed_at = ? WHERE ticket_id = ?").run(completedAt, ticket_id);
+    res.json({ success: true, message: 'Đã hoàn tất vé từ quyền Admin' });
+});
+
+// Admin Reset Today API
+app.post('/api/admin/reset', (req, res) => {
+    const token = req.body.token || (req.headers.authorization && req.headers.authorization.replace('Bearer ', ''));
+    if (token !== 'admin-session-token-3003') {
+        return res.status(401).json({ success: false, error: 'Chưa đăng nhập Admin hoặc phiên đã hết hạn' });
+    }
+    const dateKey = getVietnamDateKey();
+    db.prepare('DELETE FROM tickets WHERE date_key = ?').run(dateKey);
+    db.prepare('UPDATE daily_counters SET current_number = 0, updated_at = CURRENT_TIMESTAMP WHERE date_key = ?').run(dateKey);
+    res.json({ success: true, message: 'Đã reset toàn bộ số thứ tự hôm nay!' });
 });
 
 app.listen(PORT, () => {
