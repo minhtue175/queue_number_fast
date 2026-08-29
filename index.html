@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Nhận Số Thứ Tự | Cute Watercolor Queue</title>
+    <!-- Google Fonts: Nunito, Comfortaa & Quicksand -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@600;700&family=Nunito:ital,wght@0,600;0,700;0,800;0,900;1,600&family=Quicksand:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-ocean: #a2d5f7;
+            --text-primary: #1e4e75;
+            --text-sub: #4b7b9f;
+            --accent-blue: #3b93d6;
+            --accent-dark-blue: #236599;
+            --accent-green: #10b981;
+            --accent-gold: #f59e0b;
+            --accent-red: #ef4444;
+            --card-bg: rgba(255, 255, 255, 0.78);
+            --card-border: rgba(90, 165, 220, 0.55);
+            --radius-lg: 32px;
+            --radius-md: 22px;
+            --radius-pill: 50px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        body {
+            font-family: 'Nunito', 'Quicksand', sans-serif;
+            background: #bce3fb url('./bg_watercolor.jpg') no-repeat center center fixed;
+            background-size: cover;
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px 16px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Ambient Floating Bubbles Background Animation */
+        .bubbles-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .bubble {
+            position: absolute;
+            bottom: -50px;
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.2));
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 50%;
+            animation: rise 12s infinite ease-in;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        @keyframes rise {
+            0% {
+                transform: translateY(0) scale(0.8);
+                opacity: 0;
+            }
+            20% {
+                opacity: 0.7;
+            }
+            80% {
+                opacity: 0.7;
+            }
+            100% {
+                transform: translateY(-110vh) scale(1.2);
+                opacity: 0;
+            }
+        }
+
+        /* Container */
+        .container {
+            width: 100%;
+            max-width: 440px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Header Plastic Bag & Goldfish Deco */
+        .header-deco {
+            text-align: center;
+            margin-bottom: -10px;
+            position: relative;
+        }
+
+        .floating-badge-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(8px);
+            border: 2px dashed rgba(100, 180, 230, 0.6);
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-family: 'Comfortaa', cursive;
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--accent-dark-blue);
+            box-shadow: 0 6px 16px rgba(40, 120, 180, 0.15);
+        }
+
+        /* Main Glassmorphism Card */
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 2.5px dashed var(--card-border);
+            box-shadow: 0 20px 45px rgba(35, 100, 155, 0.2),
+                        inset 0 2px 4px rgba(255, 255, 255, 0.9);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            position: relative;
+            overflow: hidden;
+            text-align: center;
+        }
+
+        .header {
+            margin-bottom: 16px;
+        }
+
+        .header h1 {
+            font-family: 'Comfortaa', cursive;
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #174b75;
+            text-shadow: 0 2px 4px rgba(255, 255, 255, 0.8);
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .header p {
+            font-size: 0.88rem;
+            color: var(--text-sub);
+            margin-top: 4px;
+            font-weight: 600;
+        }
+
+        /* Header Reset Button */
+        .btn-reset-header {
+            background: rgba(254, 226, 226, 0.85);
+            border: 1.5px dashed #fca5a5;
+            color: #ef4444;
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 10px;
+            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.15);
+        }
+
+        .btn-reset-header:hover {
+            background: #fee2e2;
+            transform: translateY(-1px);
+        }
+
+        /* Banner Total Waiting */
+        .total-waiting-banner {
+            background: rgba(224, 242, 254, 0.9);
+            border: 2px dashed rgba(56, 189, 248, 0.5);
+            border-radius: var(--radius-md);
+            padding: 12px 16px;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 12px rgba(56, 189, 248, 0.12);
+        }
+
+        .total-waiting-banner strong {
+            color: #0284c7;
+            font-size: 1.15rem;
+            font-family: 'Comfortaa', cursive;
+        }
+
+        /* Anti-Screenshot Canvas Watermark Box */
+        .watermark-wrapper {
+            position: relative;
+            width: 100%;
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            border: 2px dashed rgba(99, 179, 237, 0.5);
+            background: linear-gradient(135deg, rgba(235, 248, 255, 0.9) 0%, rgba(220, 240, 255, 0.8) 100%);
+            margin: 14px 0;
+            box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.04);
+        }
+
+        canvas#antiScreenshotCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            opacity: 0.35;
+            pointer-events: none;
+        }
+
+        .ticket-content {
+            position: relative;
+            z-index: 2;
+            padding: 24px 16px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .ticket-number-label {
+            font-size: 0.78rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #2b70a7;
+            margin-bottom: 6px;
+        }
+
+        .ticket-number {
+            font-family: 'Comfortaa', 'Nunito', sans-serif;
+            font-size: 4.5rem;
+            font-weight: 900;
+            line-height: 1;
+            color: #1a568c;
+            text-shadow: 0 4px 12px rgba(43, 112, 167, 0.25),
+                         0 0 30px rgba(255, 255, 255, 0.8);
+            margin: 8px 0 12px 0;
+            letter-spacing: -2px;
+        }
+
+        /* Live Clock Box */
+        .live-clock-box {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.95);
+            border: 1.5px solid #7dd3fc;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-family: 'Comfortaa', cursive;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #0284c7;
+            box-shadow: 0 4px 10px rgba(2, 132, 199, 0.12);
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #10b981;
+            border-radius: 50%;
+            box-shadow: 0 0 8px #10b981;
+            animation: pulse-ring 1.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse-ring {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.3; transform: scale(0.85); }
+        }
+
+        /* Status Badge */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 800;
+            margin-top: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-issued {
+            background: rgba(224, 242, 254, 0.95);
+            color: #0369a1;
+            border: 1.5px solid #7dd3fc;
+        }
+
+        .status-completed {
+            background: rgba(220, 252, 231, 0.95);
+            color: #15803d;
+            border: 1.5px solid #86efac;
+        }
+
+        /* Waiting Ahead Card */
+        .waiting-ahead-card {
+            background: rgba(254, 243, 199, 0.92);
+            border: 2px dashed rgba(245, 158, 11, 0.5);
+            border-radius: var(--radius-md);
+            padding: 14px 18px;
+            margin: 14px 0;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.12);
+            transition: all 0.3s ease;
+        }
+
+        .waiting-ahead-card.turn-now {
+            background: rgba(220, 252, 231, 0.95);
+            border-color: rgba(34, 197, 94, 0.6);
+            box-shadow: 0 4px 18px rgba(34, 197, 94, 0.2);
+        }
+
+        .waiting-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            background: rgba(245, 158, 11, 0.2);
+            border-radius: 14px;
+            color: #d97706;
+            flex-shrink: 0;
+        }
+
+        .waiting-ahead-card.turn-now .waiting-icon {
+            background: rgba(34, 197, 94, 0.2);
+            color: #16a34a;
+        }
+
+        .waiting-info {
+            display: flex;
+            flex-direction: column;
+            text-align: left;
+        }
+
+        .waiting-label {
+            font-size: 0.7rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            color: #92400e;
+            text-transform: uppercase;
+        }
+
+        .waiting-ahead-card.turn-now .waiting-label {
+            color: #14532d;
+        }
+
+        .waiting-count {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: #78350f;
+            margin-top: 2px;
+            font-family: 'Comfortaa', cursive;
+        }
+
+        .waiting-ahead-card.turn-now .waiting-count {
+            color: #166534;
+        }
+
+        /* Checksum Bar */
+        .checksum-bar {
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 16px;
+            padding: 10px 14px;
+            font-size: 0.78rem;
+            color: var(--text-sub);
+            font-weight: 700;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1.5px dashed rgba(120, 180, 230, 0.4);
+        }
+
+        .checksum-code {
+            font-family: 'Comfortaa', cursive;
+            color: var(--text-primary);
+            font-weight: 700;
+        }
+
+        /* Buttons */
+        .action-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: var(--radius-pill);
+            font-family: 'Nunito', sans-serif;
+            font-size: 1.05rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 8px 20px rgba(50, 120, 170, 0.2);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 25px rgba(50, 120, 170, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4daae8 0%, #257bc0 100%);
+            color: #ffffff;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #34d399 0%, #059669 100%);
+            color: #ffffff;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 8px 20px rgba(5, 150, 105, 0.25);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.9);
+            color: var(--accent-dark-blue);
+            border: 2px dashed rgba(100, 180, 230, 0.6);
+        }
+
+        /* Info Card List at Bottom */
+        .info-card-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .info-pill {
+            background: rgba(255, 255, 255, 0.75);
+            border: 1.5px dashed rgba(100, 180, 230, 0.4);
+            border-radius: var(--radius-pill);
+            padding: 10px 16px;
+            font-size: 0.8rem;
+            color: var(--text-primary);
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .footer-notice {
+            text-align: center;
+            font-size: 0.75rem;
+            color: #2b6796;
+            font-weight: 700;
+            line-height: 1.5;
+            text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+        }
+
+        /* Modal Overlay */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(20, 60, 95, 0.4);
+            backdrop-filter: blur(8px);
+            z-index: 100;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-box {
+            background: rgba(255, 255, 255, 0.95);
+            border: 2.5px dashed rgba(90, 165, 220, 0.6);
+            border-radius: var(--radius-lg);
+            padding: 26px;
+            width: 100%;
+            max-width: 360px;
+            text-align: center;
+            box-shadow: 0 25px 50px rgba(20, 60, 95, 0.25);
+        }
+
+        .modal-box h3 {
+            font-family: 'Comfortaa', cursive;
+            font-size: 1.25rem;
+            color: #174b75;
+            margin-bottom: 8px;
+        }
+
+        .modal-box p {
+            font-size: 0.88rem;
+            color: var(--text-sub);
+            margin-bottom: 20px;
+            line-height: 1.4;
+            font-weight: 600;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Ambient Floating Bubbles -->
+    <div class="bubbles-container">
+        <div class="bubble" style="width: 20px; height: 20px; left: 10%; animation-duration: 8s; animation-delay: 0s;"></div>
+        <div class="bubble" style="width: 35px; height: 35px; left: 25%; animation-duration: 12s; animation-delay: 2s;"></div>
+        <div class="bubble" style="width: 15px; height: 15px; left: 40%; animation-duration: 10s; animation-delay: 4s;"></div>
+        <div class="bubble" style="width: 28px; height: 28px; left: 65%; animation-duration: 14s; animation-delay: 1s;"></div>
+        <div class="bubble" style="width: 22px; height: 22px; left: 85%; animation-duration: 9s; animation-delay: 3s;"></div>
+    </div>
+
+    <div class="container">
+        <!-- Cute Tag Deco -->
+        <div class="header-deco">
+            <div class="floating-badge-tag">
+                <span>🌸 Nụ Photobooth 📸</span>
+            </div>
+        </div>
+
+        <!-- Main Card -->
+        <div class="glass-card">
+            <div class="header">
+                <h1 id="shopTitle">
+                    <span>Nhận Số Thứ Tự</span>
+                    <span style="font-size: 1.4rem;">📸</span>
+                </h1>
+            </div>
+
+            <!-- STATE 1: NO TICKET (INITIAL SCREEN) -->
+            <div id="noTicketView" class="action-group" style="padding: 10px 0;">
+                <div id="totalWaitingBanner" class="total-waiting-banner">
+                    📊 Hiện tại có <strong id="totalWaitingCount">0</strong> lượt đang chờ
+                </div>
+                
+                <p style="text-align: center; color: var(--text-sub); font-size: 0.92rem; font-weight: 600; margin-bottom: 8px;">
+                    Vui lòng bấm nút bên dưới để lấy số thứ tự của bạn.
+                </p>
+
+                <button id="btnIssueTicket" class="btn btn-primary">
+                    <span>📸</span>
+                    <span>BỐC SỐ THỨ TỰ NGAY</span>
+                </button>
+            </div>
+
+            <!-- STATE 2: ACTIVE / COMPLETED TICKET VIEW -->
+            <div id="activeTicketView" class="hidden">
+                <!-- Anti-Screenshot Watermark Container -->
+                <div class="watermark-wrapper">
+                    <canvas id="antiScreenshotCanvas"></canvas>
+                    <div class="ticket-content">
+                        <div class="ticket-number-label">SỐ THỨ TỰ CỦA BẠN</div>
+                        <div class="ticket-number" id="ticketNumberDisplay">#---</div>
+
+                        <!-- Ticket Status -->
+                        <div id="statusBadge" class="status-badge status-issued">
+                            ● ĐANG CHỜ PHỤC VỤ
+                        </div>
+                    </div>
+                </div>
+
+                <!-- WAITING AHEAD INFO CARD -->
+                <div id="waitingAheadCard" class="waiting-ahead-card">
+                    <div class="waiting-icon">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                    </div>
+                    <div class="waiting-info">
+                        <span class="waiting-label">SỐ ĐANG CHỜ TRƯỚC STT CỦA BẠN</span>
+                        <span class="waiting-count" id="waitingAheadText">Đang tính toán...</span>
+                    </div>
+                </div>
+
+                <!-- Created Time info -->
+                <div class="checksum-bar" style="margin-bottom: 16px;">
+                    <span>Thời gian tạo:</span>
+                    <span class="checksum-code" id="ticketCreatedAtDisplay">--:--, --/--/----</span>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="action-group">
+                    <button id="btnCompleteTicket" class="btn btn-success">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                        HOÀN TẤT VÉ (ĐÃ XONG LƯỢT)
+                    </button>
+                    <button id="btnNewTicketAfterDone" class="btn btn-secondary hidden">
+                        <span>✨</span>
+                        <span>Bốc Số Lượt Mới</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Extra Info Pills -->
+            <div class="info-card-list">
+                <div class="info-pill">
+                    <span>👥</span>
+                    <span>Chỉ áp dụng cho số thứ tự đăng ký trực tiếp tại Nụ Photobooth</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-notice">
+            🔒 Màn hình tự động chống chụp ảnh • Tự reset số theo ngày mới<br>
+            Vui lòng giữ màn hình LIVE khi nhân viên kiểm tra lượt.
+        </div>
+    </div>
+
+    <!-- DOUBLE CONFIRMATION MODAL -->
+    <div id="confirmModal" class="modal-overlay">
+        <div class="modal-box">
+            <h3>Xác Nhận Hoàn Tất?</h3>
+            <p>Bạn hoặc nhân viên có chắc chắn đã hoàn thành lượt phục vụ này? Thao tác này sẽ giải phóng vé hiện tại.</p>
+            <div class="modal-actions">
+                <button id="btnCancelModal" class="btn btn-secondary" style="flex:1;">Hủy bỏ</button>
+                <button id="btnConfirmModal" class="btn btn-success" style="flex:1;">Xác nhận</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // CONFIG & STATE
+        const LOCAL_STORAGE_KEY = 'qr_queue_ticket_v1';
+        let currentTicket = null;
+        let canvasAnimId = null;
+
+        // UI ELEMENTS
+        const noTicketView = document.getElementById('noTicketView');
+        const activeTicketView = document.getElementById('activeTicketView');
+        const ticketNumberDisplay = document.getElementById('ticketNumberDisplay');
+        const statusBadge = document.getElementById('statusBadge');
+        const ticketCreatedAtDisplay = document.getElementById('ticketCreatedAtDisplay');
+        const btnIssueTicket = document.getElementById('btnIssueTicket');
+        const btnCompleteTicket = document.getElementById('btnCompleteTicket');
+        const btnNewTicketAfterDone = document.getElementById('btnNewTicketAfterDone');
+        const confirmModal = document.getElementById('confirmModal');
+        const btnCancelModal = document.getElementById('btnCancelModal');
+        const btnConfirmModal = document.getElementById('btnConfirmModal');
+        const totalWaitingCount = document.getElementById('totalWaitingCount');
+        const waitingAheadCard = document.getElementById('waitingAheadCard');
+        const waitingAheadText = document.getElementById('waitingAheadText');
+
+        // Helper: Get Today Date Key (YYYY-MM-DD)
+        function getTodayDateKey() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        // Helper: Format Created Time (HH:mm, DD/MM/YYYY)
+        function formatCreatedTime(isoString) {
+            if (!isoString) return '--:--, --/--/----';
+            try {
+                const d = new Date(isoString);
+                const hours = String(d.getHours()).padStart(2, '0');
+                const mins = String(d.getMinutes()).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const year = d.getFullYear();
+                return `${hours}:${mins}, ${day}/${month}/${year}`;
+            } catch (e) {
+                return isoString;
+            }
+        }
+
+        // Live Queue Status Poller (Fetches waiting count ahead)
+        async function fetchQueueStatus() {
+            try {
+                const tNum = (currentTicket && currentTicket.status === 'ISSUED') ? currentTicket.ticket_number : '';
+                const response = await fetch(`/api/queue/status?ticket_number=${tNum}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    if (totalWaitingCount) {
+                        totalWaitingCount.textContent = data.total_waiting || 0;
+                    }
+
+                    if (currentTicket && currentTicket.status === 'ISSUED') {
+                        const ahead = data.waiting_ahead !== undefined ? data.waiting_ahead : 0;
+                        if (ahead === 0) {
+                            waitingAheadCard.classList.add('turn-now');
+                            waitingAheadText.innerHTML = '🎉 ĐẾN LƯỢT BẠN PHỤC VỤ!';
+                        } else {
+                            waitingAheadCard.classList.remove('turn-now');
+                            waitingAheadText.textContent = `${ahead} số đang chờ`;
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error('Lỗi cập nhật trạng thái hàng chờ:', e);
+            }
+        }
+        setInterval(fetchQueueStatus, 3000);
+
+        // Canvas Dynamic Wave Watermark (Watercolor Anti-Screenshot Animation)
+        function initAntiScreenshotCanvas() {
+            const canvas = document.getElementById('antiScreenshotCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            
+            function resize() {
+                canvas.width = canvas.parentElement.clientWidth;
+                canvas.height = canvas.parentElement.clientHeight;
+            }
+            resize();
+            window.addEventListener('resize', resize);
+
+            let step = 0;
+            function animate() {
+                step += 0.03;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw soft watercolor wave ripples
+                const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+                gradient.addColorStop(0, `hsla(${Math.sin(step) * 30 + 195}, 80%, 75%, 0.35)`);
+                gradient.addColorStop(1, `hsla(${Math.cos(step) * 30 + 210}, 80%, 85%, 0.25)`);
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // Draw moving water lines & text
+                ctx.font = '12px "Comfortaa", monospace';
+                ctx.fillStyle = 'rgba(30, 80, 120, 0.18)';
+                const timeStr = new Date().toISOString().substring(11, 19);
+                for (let y = 25; y < canvas.height; y += 38) {
+                    const xOffset = (Math.sin(step + y * 0.05) * 25) + (step * 25 % canvas.width);
+                    ctx.fillText(`VERIFIED REALTIME ${timeStr} • NO SCREENSHOT`, xOffset - 120, y);
+                    ctx.fillText(`VERIFIED REALTIME ${timeStr} • NO SCREENSHOT`, xOffset + 180, y);
+                }
+
+                canvasAnimId = requestAnimationFrame(animate);
+            }
+            if (canvasAnimId) cancelAnimationFrame(canvasAnimId);
+            animate();
+        }
+
+        // LocalStorage Management
+        function loadSavedTicket() {
+            try {
+                const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+                if (!raw) return null;
+                const ticket = JSON.parse(raw);
+                if (ticket.date_key !== getTodayDateKey()) {
+                    localStorage.removeItem(LOCAL_STORAGE_KEY);
+                    return null;
+                }
+                return ticket;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function saveTicketState(ticket) {
+            currentTicket = ticket;
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(ticket));
+        }
+
+        function clearTicketState() {
+            currentTicket = null;
+            localStorage.removeItem(LOCAL_STORAGE_KEY);
+        }
+
+        // Render UI Based on Ticket State
+        function renderState() {
+            currentTicket = loadSavedTicket();
+
+            if (!currentTicket) {
+                noTicketView.classList.remove('hidden');
+                activeTicketView.classList.add('hidden');
+            } else {
+                noTicketView.classList.add('hidden');
+                activeTicketView.classList.remove('hidden');
+
+                // Render Ticket Details
+                const formattedNum = `#${String(currentTicket.ticket_number).padStart(3, '0')}`;
+                ticketNumberDisplay.textContent = formattedNum;
+                ticketCreatedAtDisplay.textContent = formatCreatedTime(currentTicket.created_at);
+
+                if (currentTicket.status === 'ISSUED') {
+                    statusBadge.className = 'status-badge status-issued';
+                    statusBadge.innerHTML = '● ĐANG CHỜ PHỤC VỤ';
+                    btnCompleteTicket.classList.remove('hidden');
+                    btnNewTicketAfterDone.classList.add('hidden');
+                    if (waitingAheadCard) waitingAheadCard.style.display = 'flex';
+                } else if (currentTicket.status === 'COMPLETED') {
+                    statusBadge.className = 'status-badge status-completed';
+                    statusBadge.innerHTML = '✓ ĐÃ HOÀN TẤT DỊCH VỤ';
+                    btnCompleteTicket.classList.add('hidden');
+                    btnNewTicketAfterDone.classList.remove('hidden');
+                    if (waitingAheadCard) waitingAheadCard.style.display = 'none';
+                }
+
+                initAntiScreenshotCanvas();
+            }
+
+            fetchQueueStatus();
+        }
+
+        // Generate Idempotency Key
+        function getIdempotencyKey() {
+            let key = sessionStorage.getItem('queue_idempotency_key');
+            if (!key) {
+                key = 'idemp_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
+                sessionStorage.setItem('queue_idempotency_key', key);
+            }
+            return key;
+        }
+
+        // API CALL: Issue Ticket
+        async function issueTicket() {
+            btnIssueTicket.disabled = true;
+            btnIssueTicket.textContent = 'Đang cấp số thứ tự...';
+
+            const idempotencyKey = getIdempotencyKey();
+
+            try {
+                const response = await fetch('/api/queue/issue', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ idempotency_key: idempotencyKey })
+                });
+
+                const data = await response.json();
+
+                if (data.success && data.ticket) {
+                    sessionStorage.removeItem('queue_idempotency_key');
+                    saveTicketState(data.ticket);
+                    renderState();
+                } else {
+                    alert('Lỗi bốc số: ' + (data.error || 'Không thể kết nối máy chủ'));
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Lỗi mạng hoặc không thể kết nối tới Server. Vui lòng kiểm tra lại!');
+            } finally {
+                btnIssueTicket.disabled = false;
+                btnIssueTicket.innerHTML = `
+                    <span>📸</span>
+                    <span>BỐC SỐ THỨ TỰ NGAY</span>
+                `;
+            }
+        }
+
+        // API CALL: Complete Ticket
+        async function completeTicket() {
+            if (!currentTicket) return;
+
+            try {
+                const response = await fetch('/api/queue/complete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ticket_id: currentTicket.ticket_id })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    currentTicket.status = 'COMPLETED';
+                    saveTicketState(currentTicket);
+                    renderState();
+                } else {
+                    alert('Lỗi: ' + (data.error || 'Thao tác thất bại') + '\n\nVé không còn tồn tại trên máy chủ. Giao diện sẽ tự làm mới để bạn bốc vé mới.');
+                    clearTicketState();
+                    renderState();
+                }
+            } catch (e) {
+                currentTicket.status = 'COMPLETED';
+                saveTicketState(currentTicket);
+                renderState();
+            }
+        }
+
+        // EVENT LISTENERS
+        btnIssueTicket.addEventListener('click', issueTicket);
+
+        btnCompleteTicket.addEventListener('click', () => {
+            confirmModal.classList.add('active');
+        });
+
+        btnCancelModal.addEventListener('click', () => {
+            confirmModal.classList.remove('active');
+        });
+
+        btnConfirmModal.addEventListener('click', async () => {
+            confirmModal.classList.remove('active');
+            await completeTicket();
+        });
+
+        btnNewTicketAfterDone.addEventListener('click', () => {
+            clearTicketState();
+            renderState();
+        });
+
+        // INIT
+        renderState();
+    </script>
+</body>
+</html>
