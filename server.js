@@ -7,6 +7,22 @@ const express = require('express');
 const Database = require('better-sqlite3');
 const crypto = require('crypto');
 const path = require('path');
+const fs = require('fs');
+
+// Load environment variables from .env file if available
+const envPath = path.join(__dirname, '.env');
+if (fs.existsSync(envPath)) {
+    const envConfig = fs.readFileSync(envPath, 'utf8');
+    envConfig.split('\n').forEach(line => {
+        const trimmed = line.trim();
+        if (trimmed && !trimmed.startsWith('#')) {
+            const [key, ...val] = trimmed.split('=');
+            if (key && val.length > 0) {
+                process.env[key.trim()] = val.join('=').trim();
+            }
+        }
+    });
+}
 
 const app = express();
 const PORT = process.env.PORT || 8000;

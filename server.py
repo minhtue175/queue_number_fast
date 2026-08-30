@@ -9,9 +9,19 @@ import os
 from datetime import datetime, timezone, timedelta
 from urllib.parse import urlparse, parse_qs
 
-PORT = 8000
+# Load environment variables from .env file if present
+env_file_path = os.path.join(os.path.dirname(__file__), ".env")
+if os.path.exists(env_file_path):
+    with open(env_file_path, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith("#") and "=" in line:
+                key, val = line.split("=", 1)
+                os.environ[key.strip()] = val.strip()
+
+PORT = int(os.environ.get("PORT", 8000))
 DB_FILE = "queue.db"
-SECRET_KEY = b"QR_QUEUE_SECRET_KEY_CHANGE_IN_PRODUCTION_2026"
+SECRET_KEY = os.environ.get("SECRET_KEY", "QR_QUEUE_SECRET_KEY_CHANGE_IN_PRODUCTION_2026").encode('utf-8')
 VIETNAM_TZ = timezone(timedelta(hours=7))
 
 def get_db():
